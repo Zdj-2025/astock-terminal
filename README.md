@@ -14,6 +14,19 @@
 | ![dashboard](docs/screenshots/dashboard.png) | ![portfolio](docs/screenshots/portfolio.png) |
 | ![stock](docs/screenshots/stock.png) | ![health](docs/screenshots/health.png) |
 
+## 背景
+
+这套系统我自己用了半年，边用边改，改动基本都来自实际使用中撞到的问题：
+
+- 数据源从 akshare 换成 tushare，起因是东财接口限流封 IP，一次收盘扫描卡了
+  15 分钟。换源时加了限速（约 280 次/分钟）和按数据类型分级的磁盘缓存
+- 每条策略推荐都记录 pnl5 / pnl10 / pnl20 做闭环追踪，连续为负的策略进删除
+  清单——现在留下的信号都是这么筛过的
+- 环境坑也踩过：系统代理指向已死端口时所有数据请求静默超时，这类问题在代码里
+  留了防御（国内数据源强制直连）
+- 看板重写过三版，从 Streamlit 多页到现在的 FastAPI + React，为的是数据量上来
+  之后页面还能即开即用
+
 ## 快速开始（演示数据）
 
 ```bash
@@ -93,4 +106,5 @@ A self-hosted A-share research terminal (FastAPI + React + ECharts): daily scann
 (stop-loss / golden cross / divergence / oversold reversal), portfolio and equity
 tracking from local spreadsheets, a per-stock workbench (K-line, dual-parameter MACD,
 Chan theory, Elliott waves), and an optional AI digest via any OpenAI-compatible API.
-Data stays on your disk. AGPL-3.0; commercial licensing available.
+Dogfooded and iterated for six months before publishing. Data stays on your disk.
+AGPL-3.0; commercial licensing available.
