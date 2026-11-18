@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ stock_name }} {{ stock_code }} — 分析报告</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+:root {
+    --bg: #0f1923;
+    --card: #1a2733;
+    --card-border: #2a3a4a;
+    --text: #e8edf2;
+    --text-muted: #8899aa;
+    --accent: #3498db;
+    --accent2: #9b59b6;
+    --green: #2ecc71;
+    --red: #e74c3c;
+    --orange: #f39c12;
+    --gold: #f1c40f;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.6;
+}
+.container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+/* Header */
+.header {
+    background: linear-gradient(135deg, #1a3a5c 0%, #0d2137 50%, #1a2733 100%);
+    border-radius: 12px;
+    padding: 30px 40px;
+    margin-bottom: 24px;
+    border: 1px solid var(--card-border);
+    position: relative;
+    overflow: hidden;
+}
+.header::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(52,152,219,0.15) 0%, transparent 70%);
+    pointer-events: none;
+}
+.header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.header h1 span.code {
+    font-size: 18px;
+    color: var(--accent);
+    font-weight: 400;
+    margin-left: 10px;
+}
+.header .meta {
+    display: flex;
+    gap: 24px;
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+.header .meta span { display: flex; align-items: center; gap: 4px; }
+.header .price {
+    font-size: 36px;
+    font-weight: 700;
+    margin-top: 16px;
+}
+.header .price .change { font-size: 16px; margin-left: 12px; }
+
+/* Section card */
+.section {
+    background: var(--card);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 20px;
+    border: 1px solid var(--card-border);
+}
+.section h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--card-border);
+    color: var(--accent);
+}
+
+/* Metrics grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+.metric-card {
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    padding: 16px;
+    border-left: 3px solid var(--accent);
+}
+.metric-card .metric-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.metric-card .metric-value {
+    font-size: 24px;
+    font-weight: 700;
+    margin-top: 4px;
+}
+.metric-card .metric-change {
+    font-size: 12px;
+    margin-top: 2px;
+}
+.positive { color: var(--green); }
+.negative { color: var(--red); }
+.neutral { color: var(--text-muted); }
+
+/* Chart container */
+.chart-container {
+    width: 100%;
+    overflow: hidden;
+    border-radius: 8px;
+    margin-top: 8px;
+}
+.chart-container .plotly-chart {
+    color: #333;
+}
+
+/* Score section */
+.score-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+@media (max-width: 768px) {
+    .score-grid { grid-template-columns: 1fr; }
+}
+.total-score-box {
+    text-align: center;
+    padding: 20px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+}
+.total-score-box .number {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1;
+}
+.total-score-box .grade {
+    font-size: 16px;
+    margin-top: 8px;
+    font-weight: 500;
+}
+.score-item {
+    display: grid;
+    grid-template-columns: 80px 1fr 30px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.score-label { font-size: 13px; color: var(--text-muted); }
+.score-bar-bg {
+    height: 8px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.score-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+.score-value { font-size: 14px; font-weight: 600; text-align: right; }
+
+/* Key levels table */
+.levels-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+.levels-table th {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--card-border);
+    color: var(--text-muted);
+    font-weight: 500;
+}
+.levels-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.levels-table .support { color: var(--green); }
+.levels-table .resist { color: var(--red); }
+
+/* Advice box */
+.advice-box {
+    background: linear-gradient(135deg, rgba(52,152,219,0.1) 0%, rgba(155,89,182,0.1) 100%);
+    border: 1px solid rgba(52,152,219,0.3);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 8px;
+}
+.advice-box h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: var(--accent);
+}
+.advice-box p {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text);
+}
+.advice-box .stop-loss {
+    display: inline-block;
+    background: rgba(231,76,60,0.15);
+    color: var(--red);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin: 0 4px;
+}
+.advice-box .take-profit {
+    display: inline-block;
+    background: rgba(46,204,113,0.15);
+    color: var(--green);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin: 0 4px;
+}
+
+/* Financial table */
+.fin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 12px;
+}
+.fin-table th {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--card-border);
+    color: var(--text-muted);
+    font-weight: 500;
+    text-align: right;
+}
+.fin-table th:first-child { text-align: left; }
+.fin-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    text-align: right;
+}
+.fin-table td:first-child { text-align: left; color: var(--text-muted); }
+
+/* Footer */
+.footer {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    padding: 20px;
+    margin-top: 12px;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+
+/* Two-column layout */
+.two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+@media (max-width: 768px) {
+    .two-col { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Header -->
+<div class="header">
+    <h1>{{ stock_name }} <span class="code">{{ stock_code }}</span></h1>
+    <div class="meta">
+        <span>📊 {{ industry }}</span>
+        <span>📅 {{ report_date }}</span>
+        {% if position %}
+        <span>💼 持仓: {{ position.shares }}股 成本{{ position.cost_price }}</span>
+        <span>📉 盈亏: <span class="{{ 'negative' if position.pnl_pct < 0 else 'positive' }}">{{ position.pnl_pct|sign}}% ({{ position.pnl_amount }})</span></span>
+        {% endif %}
+    </div>
+    <div class="price">
+        ¥{{ current_price }}
+        {% if daily_change %}
+        <span class="change {{ 'positive' if daily_change >= 0 else 'negative' }}">
+            {{ '+' if daily_change >= 0 else '' }}{{ daily_change }}%
+        </span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Overview metrics -->
+{% if metrics and metrics.revenue_growth is defined %}
+<div class="section">
+    <h2>核心指标概览</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-label">营收增长(同比)</div>
+            <div class="metric-value {{ 'positive' if metrics.revenue_growth > 0 else 'negative' }}">
+                {{ '+' if metrics.revenue_growth > 0 else '' }}{{ metrics.revenue_growth }}%
+            </div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--accent2);">
+            <div class="metric-label">净利润增长(同比)</div>
+            <div class="metric-value {{ 'positive' if metrics.profit_growth > 0 else 'negative' }}">
+                {{ '+' if metrics.profit_growth > 0 else '' }}{{ metrics.profit_growth }}%
+            </div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--green);">
+            <div class="metric-label">毛利率(销售毛利)</div>
+            <div class="metric-value">{{ metrics.gross_margin }}%</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--gold);">
+            <div class="metric-label">ROE(净资产收益率)</div>
+            <div class="metric-value">{{ metrics.roe }}%</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--orange);">
+            <div class="metric-label">PE市盈率(TTM)</div>
+            <div class="metric-value">{{ metrics.pe }}</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--text-muted);">
+            <div class="metric-label">资产负债率</div>
+            <div class="metric-value">{{ metrics.debt_ratio }}%</div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Financial trend chart -->
+{% if charts.financial %}
+<div class="section">
+    <h2>季度财务趋势</h2>
+    <div class="chart-container">{{ charts.financial }}</div>
+</div>
+{% endif %}
+
+<!-- Financial detail table -->
+{% if quarterly_data %}
+<div class="section">
+    <h2>季度财务明细</h2>
+    <div style="overflow-x:auto;">
+    <table class="fin-table">
+        <thead>
+            <tr>
+                <th>指标</th>
+                {% for q in quarterly_data.quarters %}<th>{{ q }}</th>{% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in quarterly_data.rows %}
+            <tr>
+                <td>{{ row.label }}</td>
+                {% for val in row.vals %}<td>{{ val }}</td>{% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Technical analysis: K-line panel -->
+{% if charts.kline %}
+<div class="section">
+    <h2>技术分析</h2>
+    <div class="chart-container">{{ charts.kline }}</div>
+</div>
+{% endif %}
+
+<!-- Key levels + Scores -->
+{% if charts.levels or scores %}
+<div class="two-col">
+    {% if charts.levels %}
+    <div class="section">
+        <h2>支撑/压力位</h2>
+        <div class="chart-container">{{ charts.levels }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Score section -->
+    {% if scores %}
+    <div class="section">
+        <h2>综合评分</h2>
+        <div class="score-grid" style="grid-template-columns: 1fr;">
+            {% if charts.radar %}
+            <div>{{ charts.radar }}</div>
+            {% endif %}
+            <div>
+                {% for dim, score in scores.items() %}
+                <div class="score-item">
+                    <span class="score-label">{{ dim }}</span>
+                    <div class="score-bar-bg">
+                        <div class="score-bar" style="width:{{ score * 10 }}%;
+                            background:{% if score >= 8 %}var(--green){% elif score >= 6 %}var(--accent){% elif score >= 4 %}var(--orange){% else %}var(--red){% endif %}">
+                        </div>
+                    </div>
+                    <span class="score-value">{{ score }}</span>
+                </div>
+                {% endfor %}
+                {% if total_score %}
+                <div style="text-align:center; margin-top:16px; padding-top:12px; border-top:1px solid var(--card-border);">
+                    <span style="font-size:32px; font-weight:800;
+                        color:{% if total_score >= 7.5 %}var(--green){% elif total_score >= 6 %}var(--accent){% elif total_score >= 4.5 %}var(--orange){% else %}var(--red){% endif %}">
+                        {{ total_score }}
+                    </span>
+                    <span style="font-size:14px; color:var(--text-muted); margin-left:4px;">/ 10</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Portfolio distribution -->
+{% if charts.portfolio %}
+<div class="section">
+    <h2>持仓分布</h2>
+    <div class="chart-container">{{ charts.portfolio }}</div>
+</div>
+{% endif %}
+
+<!-- Advice -->
+{% if advice %}
+<div class="section">
+    <h2>操作建议</h2>
+    <div class="advice-box">
+        <h3>{{ advice.title }}</h3>
+        <p>{{ advice.content }}</p>
+        {% if advice.stop_loss %}
+        <p style="margin-top:12px;">
+            止损价: <span class="stop-loss">{{ advice.stop_loss }}</span>
+            {% if advice.take_profit %}
+            目标价: <span class="take-profit">{{ advice.take_profit }}</span>
+            {% endif %}
+        </p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Footer -->
+<div class="footer">
+    <p>数据来源：AKShare | 生成时间：{{ generated_at }}</p>
+    <p>免责声明：本分析基于公开财务数据和技术指标，仅供参考，不构成投资建议。</p>
+</div>
+
+</div>
+</body>
+</html>

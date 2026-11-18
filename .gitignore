@@ -1,0 +1,15 @@
+# 私有数据与运行时产物（永不入库）
+data/
+config/*.xlsx
+config/*.csv
+config/*.json
+!config/*.example.*
+reports/
+memory/
+*.log
+.env
+__pycache__/
+*.pyc
+node_modules/
+web/frontend/dist/
+.DS_Store

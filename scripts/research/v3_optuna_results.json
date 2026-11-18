@@ -1,0 +1,49 @@
+{
+  "optuna_best_params": {
+    "pos_w": 0.7228775393662822,
+    "trend_w": 4.632220514565351,
+    "curv_w": 4.2892431446455825,
+    "f1_thresh": 0.49987241987753367,
+    "f2_thresh": 0.09282000751451741
+  },
+  "optuna_global_ic": 0.40368056089683285,
+  "optuna_wf_ic": 0.34686926954197767,
+  "label_feature_experiments": {
+    "\u539f\u59cb\u6807\u7b7e+\u539f\u59cb\u7279\u5f81": {
+      "mean_IC": 0.5736,
+      "std_IC": 0.0633,
+      "positive_rate": 100.0,
+      "n_windows": 47
+    },
+    "Rank\u6807\u7b7e+\u539f\u59cb\u7279\u5f81": {
+      "mean_IC": 0.5772,
+      "std_IC": 0.0696,
+      "positive_rate": 100.0,
+      "n_windows": 47
+    },
+    "\u539f\u59cb\u6807\u7b7e+\u622a\u9762Z\u7279\u5f81": {
+      "mean_IC": 0.542,
+      "std_IC": 0.0593,
+      "positive_rate": 100.0,
+      "n_windows": 47
+    },
+    "Rank\u6807\u7b7e+\u622a\u9762Z\u7279\u5f81": {
+      "mean_IC": 0.6315,
+      "std_IC": 0.047,
+      "positive_rate": 100.0,
+      "n_windows": 47
+    },
+    "\u539f\u59cb\u6807\u7b7e+\u884c\u4e1a\u4e2d\u6027\u7279\u5f81": {
+      "mean_IC": 0.4699,
+      "std_IC": 0.0488,
+      "positive_rate": 100.0,
+      "n_windows": 47
+    },
+    "Rank\u6807\u7b7e+\u884c\u4e1a\u4e2d\u6027\u7279\u5f81": {
+      "mean_IC": 0.5129,
+      "std_IC": 0.0481,
+      "positive_rate": 100.0,
+      "n_windows": 47
+    }
+  }
+}

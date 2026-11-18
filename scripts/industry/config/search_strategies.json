@@ -1,0 +1,221 @@
+{
+  "version": 1,
+  "description": "行业分析系统搜索策略矩阵。每维度定义：搜索关键词(中英文)、目标来源、最少来源数、必须有项",
+  "dimensions": {
+    "market_size": {
+      "label": "市场规模与增速",
+      "search_queries": {
+        "zh": [
+          "{industry} 市场规模 {year}",
+          "{industry} 增长率 CAGR 预测",
+          "{industry} 行业规模 全球 中国",
+          "{industry} TAM SAM SOM 市场空间"
+        ],
+        "en": [
+          "{industry} market size forecast {year}",
+          "{industry} CAGR growth rate global",
+          "{industry} TAM SAM SOM market",
+          "{industry} market China vs global"
+        ]
+      },
+      "target_sources": [
+        "IDC",
+        "Gartner",
+        "Statista",
+        "中国信息通信研究院",
+        "赛迪顾问",
+        "艾瑞咨询",
+        "弗若斯特沙利文",
+        "前瞻产业研究院"
+      ],
+      "source_tier": "一手",
+      "min_sources": 3,
+      "must_have": [
+        "全球市场规模（金额+年份）",
+        "中国市场规模（金额+年份）",
+        "增速/CAGR（百分比+时间范围）"
+      ],
+      "output_format": "数据卡片：市场规模(全球/中国) + CAGR + 来源标注"
+    },
+    "penetration": {
+      "label": "渗透率/国产化率",
+      "search_queries": {
+        "zh": [
+          "{industry} 渗透率 {year}",
+          "{industry} 普及率 采用率",
+          "{industry} 国产化率 自主可控 替代率",
+          "{industry} 国内厂商 市占率 vs 海外"
+        ],
+        "en": [
+          "{industry} penetration rate {year}",
+          "{industry} adoption rate China",
+          "{industry} localization rate domestic",
+          "{industry} China market share vs foreign"
+        ]
+      },
+      "target_sources": [
+        "McKinsey",
+        "BCG",
+        "中国信息通信研究院",
+        "行业协会（如半导体行业协会、人工智能学会）",
+        "商务部/海关总署"
+      ],
+      "source_tier": "一手",
+      "min_sources": 3,
+      "must_have": [
+        "渗透率数值（明确是什么的渗透率）",
+        "渗透率定义（分子/分母分别是什么）",
+        "数据来源机构名",
+        "对比数据（至少两个时间点或两个地区）"
+      ],
+      "output_format": "渗透率卡片：数值+定义+来源+对比"
+    },
+    "competition": {
+      "label": "竞争格局",
+      "search_queries": {
+        "zh": [
+          "{industry} 竞争格局 市场份额 {year}",
+          "{industry} 龙头企业 排名 TOP",
+          "{industry} CR3 CR5 集中度",
+          "{industry} 护城河 竞争壁垒 核心优势"
+        ],
+        "en": [
+          "{industry} market share leaders {year}",
+          "{industry} competitive landscape",
+          "{industry} CR3 CR5 concentration",
+          "{industry} moat competitive advantage"
+        ]
+      },
+      "target_sources": [
+        "券商研报（中金/招商/中信/国泰君安）",
+        "公司年报/招股书",
+        "行业协会统计"
+      ],
+      "source_tier": "一手或二手",
+      "min_sources": 3,
+      "must_have": [
+        "头部公司名单及各自市场份额",
+        "行业集中度（CR3或CR5）",
+        "至少1家公司的核心竞争力分析（有数据支撑）"
+      ],
+      "output_format": "竞争格局卡片：公司+份额+壁垒+来源"
+    },
+    "policy": {
+      "label": "政策环境",
+      "search_queries": {
+        "zh": [
+          "{industry} 政策 十四五 规划",
+          "{industry} 补贴 扶持 专项资金",
+          "{industry} 监管 准入 牌照",
+          "{industry} 国家标准 行业标准"
+        ],
+        "en": [
+          "China {industry} policy regulation",
+          "{industry} government support subsidy",
+          "{industry} national standard China"
+        ]
+      },
+      "target_sources": [
+        "国务院",
+        "发改委",
+        "工信部",
+        "科技部",
+        "证监会",
+        "行业协会"
+      ],
+      "source_tier": "一手",
+      "min_sources": 2,
+      "must_have": [
+        "核心政策文件名及发布日期",
+        "政策方向（扶持/限制/中性）",
+        "具体措施（补贴金额/税收优惠/准入条件）"
+      ],
+      "output_format": "政策卡片：文件名+日期+方向+具体措施+来源"
+    },
+    "technology": {
+      "label": "技术路线",
+      "search_queries": {
+        "zh": [
+          "{industry} 技术路线 趋势 {year}",
+          "{industry} 技术迭代 下一代 突破",
+          "{industry} 技术壁垒 难点 瓶颈",
+          "{industry} 专利 技术 领先"
+        ],
+        "en": [
+          "{industry} technology roadmap trend",
+          "{industry} next generation breakthrough",
+          "{industry} technical bottleneck challenge",
+          "{industry} patent technology leadership"
+        ]
+      },
+      "target_sources": [
+        "Gartner Hype Cycle",
+        "技术白皮书（公司/联盟发布）",
+        "学术论文（IEEE/ACM/Nature）",
+        "专利数据库（WIPO/国家知识产权局）"
+      ],
+      "source_tier": "一手",
+      "min_sources": 2,
+      "must_have": [
+        "当前主流技术路线",
+        "下一代技术方向及预计成熟时间",
+        "技术切换的关键节点/时间点"
+      ],
+      "output_format": "技术卡片：路线图+代际+切换时间+来源"
+    },
+    "company_deep": {
+      "label": "头部公司深度分析",
+      "search_queries": {
+        "zh": [
+          "{company} 年报 {year} 营收 利润",
+          "{company} 核心产品 市占率 竞争优势",
+          "{company} 战略 布局 研发投入",
+          "{company} 招股书 募投项目"
+        ],
+        "en": [
+          "{company} annual report revenue {year}",
+          "{company} market position strategy",
+          "{company} R&D investment innovation"
+        ]
+      },
+      "target_sources": [
+        "公司年报（巨潮资讯/上交所/深交所/港交所）",
+        "招股说明书",
+        "券商研报",
+        "公司官网/投资者关系"
+      ],
+      "source_tier": "一手",
+      "min_sources": 1,
+      "per_company": true,
+      "must_have": [
+        "营收及增速（近2-3年）",
+        "核心产品/服务及收入占比",
+        "市占率（如有）",
+        "战略方向（公司自己说的+分析师判断）"
+      ],
+      "output_format": "公司卡片：财务+产品+份额+战略+来源"
+    }
+  },
+  "source_tiers": {
+    "一手": {
+      "description": "原始报告/数据发布方",
+      "credibility": "最高",
+      "examples": ["IDC/Gartner年报", "国家统计局", "公司年报/招股书", "国务院政策文件"]
+    },
+    "二手": {
+      "description": "媒体/研报引用一手数据",
+      "credibility": "中",
+      "examples": ["36kr/财新报道", "券商研报（引用IDC数据）", "行业公众号"]
+    },
+    "三手": {
+      "description": "百科/博客/论坛汇总",
+      "credibility": "低",
+      "examples": ["百度百科", "知乎回答", "雪球帖子", "个人博客"]
+    }
+  },
+  "confidence_levels": {
+    "high": "≥2个独立一手来源一致",
+    "medium": "1个一手来源，或有二手来源佐证",
+    "low": "单一来源，或多个来源数据冲突"
+  }
+}
