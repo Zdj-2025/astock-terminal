@@ -10,16 +10,14 @@ import sys
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import q  # noqa: E402
+from web.backend import settings as S  # noqa: E402
 
-app = FastAPI(title="stock-terminal", docs_url=None, redoc_url=None)
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
-                   allow_headers=["*"])
+app = FastAPI(title="astock-terminal", docs_url=None, redoc_url=None)
 
 TXT = lambda v: None if v is None or v != v else v  # NaN→None
 
@@ -279,9 +277,11 @@ def page_health():
             fails = _re.findall(r"✗(T\d+[^;；]*)", line)
             checks.append({"date": m.group(1), "pass": m.group(2) == "PASS",
                            "fails": [f.strip() for f in fails]})
-    secs = q.state_sections()
-    progress = next((v for k, v in secs.items() if k.startswith("二、蓝图进度")), "")
-    delist = next((v for k, v in secs.items() if k.startswith("七、该删清单")), "")
+    secs = list(q.state_sections().items())
+    progress = secs[0][1] if secs else ""
+    delist = secs[1][1] if len(secs) > 1 else ""
+    if fresh["ok_rate"] != fresh["ok_rate"]:
+        fresh["ok_rate"] = None
     return {
         "freshness": fresh, "lag": lag,
         "health_checks": checks[::-1],
@@ -292,6 +292,45 @@ def page_health():
                  "first_board": q.log_tail("first_board.log", 3)},
     }
 
+
+
+# ═══════════════ AI 解读（OpenAI 兼容协议，可选） ═══════════════
+
+@app.get("/api/settings/status")
+def settings_status():
+    return {"llm": bool(S.LLM_API_KEY), "tushare": bool(S.TUSHARE_TOKEN),
+            "data_dir": str(S.DATA_DIR), "version": "0.3.0"}
+
+
+@app.get("/api/ai/digest")
+def ai_digest():
+    """把晚报数据交给 LLM 生成解盘（需在 .env 配置 LLM_*）。"""
+    if not S.LLM_API_KEY:
+        return JSONResponse(status_code=400, content={
+            "error": "未配置 LLM_API_KEY。复制 .env.example 为 .env，填入任意 OpenAI 兼容服务的 "
+                     "LLM_API_KEY / LLM_BASE_URL / LLM_MODEL（GLM/OpenAI/DeepSeek/Ollama 均可）。"})
+    import requests as _rq
+    text = evening_report().get("text", "")[:6000]
+    prompt = (
+        "你是一名严谨的 A 股投研助理。以下是本地量化系统的收盘总结数据（程序实算，非行情软件）：\n\n"
+        f"{text}\n\n"
+        "请输出 markdown 格式的解盘，包含：①持仓风险（重点逐条核对🔴真止损）；②信号面解读"
+        "（金叉/底背离/超跌的结构含义，不超过5条）；③明日关注清单（具体到价位）。"
+        "约束：只依据给出的数据，不编造行情；数字必须引用原文；结尾固定加一行"
+        "「> ⚠️ 以上为程序数据 + AI 生成的解读，不构成投资建议」。中文，600字内。")
+    try:
+        r = _rq.post(
+            f"{S.LLM_BASE_URL.rstrip('/')}/chat/completions",
+            headers={"Authorization": f"Bearer {S.LLM_API_KEY}"},
+            json={"model": S.LLM_MODEL,
+                  "messages": [{"role": "user", "content": prompt}],
+                  "temperature": 0.3},
+            timeout=90)
+        r.raise_for_status()
+        msg = r.json()["choices"][0]["message"]["content"]
+        return {"markdown": msg, "model": S.LLM_MODEL}
+    except Exception as e:
+        return JSONResponse(status_code=502, content={"error": f"LLM 调用失败：{str(e)[:200]}"})
 
 # ═══════════════ 静态托管（前端构建产物） ═══════════════
 

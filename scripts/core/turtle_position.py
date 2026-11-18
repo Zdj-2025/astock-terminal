@@ -357,7 +357,7 @@ if __name__ == '__main__':
     import sys
     sys.path.insert(0, '.')
 
-    # 演示：用庄哥的资金计算
+    # 演示：用示例资金计算
     tp = TurtlePosition(total_capital=467100)
 
     print("=" * 50)

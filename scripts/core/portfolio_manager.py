@@ -14,10 +14,10 @@
   4. ATR止损/止盈检查集成
 
 核心原则：
-  - portfolio.xlsx 是持仓唯一真相（庄哥6/10确认）
+  - portfolio.xlsx 是持仓唯一真相（2026-06-10 合作确认）
   - trade_log.xlsx 是流水记录（每笔交易）
   - 每次交易后两个文件同步更新
-  - 庄哥发截图时以截图为准
+  - 以券商截图为准
 
 用法:
     from scripts.core.portfolio_manager import PortfolioManager

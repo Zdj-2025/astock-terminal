@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import Chart, { C, axisX, axisY, tooltip, legend } from "../lib/chart";
 import { PageHead, Stat, Panel, Tabs, DT, Level, Pct, Loading, Md } from "../components/ui";
-import { FileText, Play, RotateCw } from "lucide-react";
+import { FileText, Play, RotateCw, Sparkles } from "lucide-react";
 
 const fmtWan = (v) => v == null || v === "" ? "—" : (Number(v) / 1e4).toFixed(1);
 
@@ -26,6 +26,12 @@ export default function Dashboard() {
   const [premTitle, setPremTitle] = useState("");
   const [premBusy, setPremBusy] = useState(false);
   const [premShow, setPremShow] = useState(false);
+  const [ai, setAi] = useState(null);            // AI 解读 {markdown|error}
+  const [aiBusy, setAiBusy] = useState(false);
+  const [llmReady, setLlmReady] = useState(null);
+  useEffect(() => {
+    api("/api/settings/status").then((s) => setLlmReady(!!s.llm)).catch(() => setLlmReady(false));
+  }, []);
 
   if (err) return <Panel title="加载失败">{err}</Panel>;
   if (!d) return <Loading />;
@@ -49,6 +55,12 @@ export default function Dashboard() {
       setPrem(r.text);
     } catch (e) { setPrem(String(e)); }
     setPremBusy(false);
+  };
+
+  const genAi = async () => {
+    setAiBusy(true); setAi(null);
+    try { setAi(await api("/api/ai/digest")); } catch (e) { setAi({ error: String(e) }); }
+    setAiBusy(false);
   };
 
   return (
@@ -120,11 +132,30 @@ export default function Dashboard() {
                 </div>
               </details>
             )}
-            {!premShow && (
+            {ai && (
+              <div style={{ marginTop: 10 }}>
+                {ai.markdown
+                  ? <div className="panel" style={{ marginBottom: 0 }}><Md text={ai.markdown} />
+                      <div className="note">模型：{ai.model}</div></div>
+                  : <div className="empty" style={{ color: "var(--warn)" }}>{ai.error}</div>}
+              </div>
+            )}
+            {!premShow && !ai && (
               <div className="empty">
                 晨报 = 盘前持仓检查（subprocess，首次 1-3 分钟，当日缓存）<br />
-                晚报 = 收盘总结（只读组装当日信号/止损/累积榜/公告/闭环，秒出）
+                晚报 = 收盘总结（只读组装当日信号/止损/累积榜/公告/闭环，秒出）<br />
+                {llmReady === false && <span style={{ color: "var(--ink-3)" }}>AI 解读需在 .env 配置 LLM_API_KEY（见 .env.example）</span>}
               </div>
+            )}
+          </Panel>
+          <Panel title="AI 解盘" extra="OpenAI 兼容 · 可选">
+            <button className="btn" onClick={genAi} disabled={aiBusy || llmReady === false}
+                    title={llmReady === false ? "未配置 LLM_API_KEY（.env）" : "基于晚报数据生成 AI 解读"}>
+              <Sparkles size={13} />{aiBusy ? "解读中…" : "生成 AI 解读"}
+            </button>
+            {llmReady === false && (
+              <div className="note">未配置：复制 <code>.env.example</code> 为 <code>.env</code>，填入任意 OpenAI 兼容服务的
+                LLM_API_KEY / LLM_BASE_URL / LLM_MODEL（GLM / OpenAI / DeepSeek / 本地 Ollama 均可）。</div>
             )}
           </Panel>
 

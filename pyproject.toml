@@ -1,0 +1,10 @@
+[project]
+name = "astock-terminal"
+version = "0.3.0"
+description = "本地优先的 A 股投研终端：数据自持 · 策略可改 · AI 可选（FastAPI + React + ECharts）"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+
+[tool.setuptools]
+packages = { find = { include = ["scripts*", "web*"] } }

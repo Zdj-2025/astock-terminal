@@ -1,0 +1,10 @@
+services:
+  terminal:
+    build: { context: .., dockerfile: deploy/Dockerfile }
+    ports: ["8601:8601"]
+    volumes:
+      - ../data:/app/data          # 挂载你的数据（首次可先 demo: python demo/generate_demo.py --install）
+      - ../config:/app/config
+      - ../reports:/app/reports
+    env_file: ../.env              # 可选：TUSHARE_TOKEN / LLM_*
+    restart: unless-stopped

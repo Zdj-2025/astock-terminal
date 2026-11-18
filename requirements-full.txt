@@ -1,0 +1,5 @@
+# 可选增强（-r requirements.txt 基础上）：
+# - tushare：日线下载 / 缠论日线源 / 综合评分 / 财报季历
+# - akshare：缠论60分钟 / 部分免费实时接口（安装体积较大）
+tushare>=1.4
+akshare>=1.12

@@ -22,10 +22,12 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-STORE = PROJECT_ROOT / "data/store"
+from web.backend import settings as S  # noqa: E402
+
+STORE = S.DATA_DIR / "store"
 KLINE = STORE / "kline"
-REPORTS = PROJECT_ROOT / "reports"
-CONFIG = PROJECT_ROOT / "config"
+REPORTS = S.REPORTS_DIR
+CONFIG = S.CONFIG_DIR
 ACCOUNTING = REPORTS / "accounting"
 
 _cache: dict = {}
@@ -96,6 +98,8 @@ def stock_name(code) -> str:
 
 def load_portfolio(active_only=False) -> pd.DataFrame:
     def _p():
+        if not (CONFIG / "portfolio.xlsx").exists():
+            return pd.DataFrame()
         df = pd.read_excel(CONFIG / "portfolio.xlsx")
         df["code"] = df["code"].astype(str).str.zfill(6)
         for c in ("avg_cost", "stop_loss", "take_profit", "position_pct", "last_price"):
@@ -104,11 +108,15 @@ def load_portfolio(active_only=False) -> pd.DataFrame:
         df["shares"] = pd.to_numeric(df["shares"], errors="coerce").fillna(0).astype(int)
         return df
     df = _ttl("portfolio", _p, 120)
+    if df.empty or "shares" not in df.columns:
+        return pd.DataFrame()
     return df[df["shares"] > 0].reset_index(drop=True) if active_only else df
 
 
 def load_capital() -> dict:
     def _c():
+        if not (CONFIG / "capital.xlsx").exists():
+            return pd.DataFrame()
         df = pd.read_excel(CONFIG / "capital.xlsx")
         out = {}
         for _, r in df.iterrows():
@@ -123,6 +131,8 @@ def load_capital() -> dict:
 
 def load_capital_snapshots() -> pd.DataFrame:
     def _s():
+        if not (ACCOUNTING / "capital_snapshots.csv").exists():
+            return pd.DataFrame()
         df = pd.read_csv(ACCOUNTING / "capital_snapshots.csv", dtype=str).fillna("")
         _num = lambda s: pd.to_numeric(s.str.replace(",", "", regex=False), errors="coerce")
         # 2026-11 起行在 asof 后多一个来源列（重构/券商截图）→ 整行右移，字符串阶段修复
@@ -151,6 +161,8 @@ def load_cash_ratio():
 
 def load_daily_equity() -> pd.DataFrame:
     def _e():
+        if not (ACCOUNTING / "daily_equity_reconstructed.csv").exists():
+            return pd.DataFrame()
         df = pd.read_csv(ACCOUNTING / "daily_equity_reconstructed.csv")
         df["date"] = df["date"].astype(str).str.replace("-", "", regex=False)
         return df.sort_values("date").reset_index(drop=True)
@@ -159,6 +171,8 @@ def load_daily_equity() -> pd.DataFrame:
 
 def load_trade_log(n=50) -> pd.DataFrame:
     def _t():
+        if not (CONFIG / "trade_log.csv").exists():
+            return pd.DataFrame()
         try:
             return pd.read_csv(CONFIG / "trade_log.csv")
         except pd.errors.ParserError:
@@ -171,6 +185,8 @@ def load_trade_log(n=50) -> pd.DataFrame:
 
 def load_scan_history(n_days=20) -> pd.DataFrame:
     def _s():
+        if not (STORE / "scan_history.parquet").exists():
+            return pd.DataFrame()
         df = pd.read_parquet(STORE / "scan_history.parquet")
         df["date"] = df["date"].astype(str).str.replace("-", "", regex=False)
         dates = sorted(df["date"].unique(), reverse=True)[:n_days]
@@ -199,6 +215,8 @@ def get_accumulate(n_days=20) -> pd.DataFrame:
 
 def load_recommendations(n=0) -> pd.DataFrame:
     def _r():
+        if not (REPORTS / "recommendations.csv").exists():
+            return pd.DataFrame()
         df = pd.read_csv(REPORTS / "recommendations.csv")
         for c in ("pnl5", "pnl10", "pnl20"):
             if c in df.columns:
@@ -366,6 +384,8 @@ def scan_freshness():
     bench_df = load_kline("000001")
     bench = str(bench_df["date"].iloc[-1]) if not bench_df.empty else ""
     rows = []
+    if not KLINE.exists():
+        return {"bench": "", "files": 0, "ok_rate": float("nan"), "hist": []}
     with os.scandir(KLINE) as it:
         for e in it:
             if e.is_dir():
@@ -381,23 +401,25 @@ def scan_freshness():
 
 
 def load_cron() -> list[dict]:
-    p = Path.home() / ".openclaw/cron/jobs.json.migrated"
+    """计划任务展示：读可选的 <CONFIG_DIR>/cron.json（模板见 templates/config/）。"""
+    p = CONFIG / "cron.json"
     if not p.exists():
         return []
     try:
-        j = json.loads(p.read_text())
-        jobs = j.get("jobs", j) if isinstance(j, dict) else j
-        return [{"name": x.get("name", ""),
-                 "expr": (x.get("schedule") or {}).get("expr") or "—",
-                 "enabled": bool(x.get("enabled"))}
+        jobs = json.loads(p.read_text())
+        return [{"name": x.get("name", ""), "expr": x.get("expr", "—"),
+                 "enabled": bool(x.get("enabled", True))}
                 for x in jobs if isinstance(x, dict)]
     except (json.JSONDecodeError, AttributeError):
         return []
 
 
 def state_sections() -> dict:
-    text = (PROJECT_ROOT / "STATE.md").read_text(encoding="utf-8")
-    parts = re.split(r"(?m)^## ", text)
+    """运维笔记（可选）：CONFIG_DIR/notes.md，按 `## 标题` 分节，展示在系统健康页。"""
+    p = CONFIG / "notes.md"
+    if not p.exists():
+        return {}
+    parts = re.split(r"(?m)^## ", p.read_text(encoding="utf-8"))
     out = {}
     for part in parts[1:]:
         lines = part.splitlines()

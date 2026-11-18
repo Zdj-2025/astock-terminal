@@ -33,7 +33,7 @@ sys.path.insert(0, PROJECT_ROOT)
 from scripts.core.tushare_client import TushareClient
 
 
-# 庄哥的ETF持仓（截至2026-05-18）
+# 示例 ETF 持仓（截至 2026-05-18，模板参考）
 MY_ETF_HOLDINGS = {
     "512760": {"name": "芯片ETF", "shares": 20000, "cost": 1.589},
     "159819": {"name": "AI智能ETF", "shares": 10000, "cost": 0.210},

@@ -1,9 +1,6 @@
-# 私有数据与运行时产物（永不入库）
+# 运行目录（demo --install 或你的真实数据；模板在 templates/，演示源在 demo/）
 data/
-config/*.xlsx
-config/*.csv
-config/*.json
-!config/*.example.*
+config/
 reports/
 memory/
 *.log
