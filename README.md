@@ -85,7 +85,7 @@ crontab 调度。目录重定向等配置见 [docs/configuration.md](docs/config
 
 ## 许可
 
-AGPL-3.0。云服务使用本项目需开放源码，或联系商业授权（[Issues](https://github.com/Zdj-2025/astock-terminal/issues)）。
+AGPL-3.0。云服务使用本项目需开放源码，或联系商业授权：zdjsd@126.com。
 
 ---
 
