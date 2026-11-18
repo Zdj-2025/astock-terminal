@@ -8,5 +8,6 @@ memory/
 __pycache__/
 *.pyc
 node_modules/
-web/frontend/dist/
 .DS_Store
+# 注意：web/frontend/dist/ 是提交进仓库的——访客无需 Node 环境即可 make demo；
+# 改前端代码后记得 npm run build 再提交（CI 也会构建校验）

@@ -196,6 +196,8 @@ def load_scan_history(n_days=20) -> pd.DataFrame:
 
 def signals_latest(strategy: str):
     sh = load_scan_history()
+    if "strategy" not in sh.columns:   # 零数据（未跑扫描/demo）→ 空信号
+        return "", pd.DataFrame()
     sub = sh[sh["strategy"] == strategy]
     if sub.empty:
         return "", pd.DataFrame()

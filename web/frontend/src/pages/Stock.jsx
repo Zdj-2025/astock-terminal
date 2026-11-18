@@ -44,7 +44,19 @@ export default function Stock() {
         </select>
       </form>
 
-      {err && <Panel title="加载失败">{err}</Panel>}
+      {err && (
+        <Panel title="加载失败">
+          {err}
+          {err.includes("本地无") && (
+            <div className="note" style={{ marginTop: 8 }}>
+              本地还没下载过这只票的 K线。两种解决方式：<br />
+              ① 先看演示：<code>make demo</code>（合成数据，含 17 只常见标的）<br />
+              ② 下载真实日线：「设置」页配好 Tushare token 后运行
+              <code> PYTHONPATH=. python scripts/data/update_all_kline.py</code>
+            </div>
+          )}
+        </Panel>
+      )}
       {!d && !err && <Loading />}
 
       {d && (

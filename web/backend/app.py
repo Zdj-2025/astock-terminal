@@ -50,7 +50,7 @@ def page_dashboard():
     recs = q.load_recommendations(20)
     pri = {"🔴高": 0, "🟡中": 1, "🟢低": 2}
     return {
-        "bench": q.fmt_date(bench), "today": q.datetime.now().strftime("%m-%d"),
+        "bench": q.fmt_date(bench) if bench else "", "today": q.datetime.now().strftime("%m-%d"),
         "stop": {"red": cnt("🔴"), "orange": cnt("🟠"), "yellow": cnt("🟡")},
         "cash": {"pct": TXT(round(cash, 1)), "asof": cash_asof},
         "signals": sig,
@@ -88,7 +88,7 @@ def evening_report():
     red = [r for r in sl if "🔴" in r["trigger"]]
     org = [r for r in sl if "🟠" in r["trigger"]]
     yel = [r for r in sl if "🟡" in r["trigger"]]
-    L.append(f"{bar} ① 持仓止损（数据至 {q.fmt_date(bench)}）")
+    L.append(f"{bar} ① 持仓止损（数据至 {q.fmt_date(bench) if bench else '无'}）")
     L.append(f"   🚨 真止损 {len(red)} 只 | 见底 {len(org)} | 移动 {len(yel)} | 共 {len(sl)} 只持仓")
     for r in red:
         L.append(f"   🔴 {r['name']}({r['code']}) 现价{r['cur']:.2f} 盈亏{r['pnl']:+.1f}% → {r['trigger'][1:]}")
@@ -141,13 +141,20 @@ def evening_report():
 
 @app.get("/api/page/portfolio")
 def page_portfolio():
+    def _f(v):  # 数值或 None（NaN/缺失 → None，保证 JSON 合法）
+        try:
+            v = float(v)
+            return v if v == v else None
+        except (TypeError, ValueError):
+            return None
+
     snaps = q.load_capital_snapshots()
     anchor = snaps.iloc[-1] if not snaps.empty else None
     cap = q.load_capital()
     eq = q.load_daily_equity()
-    total = float(anchor["total"]) if anchor is not None else cap.get("总资产", float("nan"))
-    cash_v = float(anchor["cash"]) if anchor is not None else cap.get("可用资金", float("nan"))
-    mv_v = float(anchor["mv"]) if anchor is not None else cap.get("总市值", float("nan"))
+    total = _f(anchor["total"]) if anchor is not None else _f(cap.get("总资产"))
+    cash_v = _f(anchor["cash"]) if anchor is not None else _f(cap.get("可用资金"))
+    mv_v = _f(anchor["mv"]) if anchor is not None else _f(cap.get("总市值"))
     anchor_day = q.fmt_date(anchor["asof"]) if anchor is not None else "capital.xlsx"
 
     positions, bond, wide, attack = [], 0.0, 0.0, 0.0
@@ -170,7 +177,7 @@ def page_portfolio():
                 wide += mv
             else:
                 attack += mv
-    tot4 = bond + wide + attack + cash_v
+    tot4 = bond + wide + attack + (cash_v or 0.0)
     benchmarks = {}
     for key, code in (("sse", "000001SH"), ("hs300", "000300SH")):
         b = q.load_kline(code)
@@ -183,8 +190,9 @@ def page_portfolio():
     day_pnl = cap.get("当日盈亏")
     return {
         "anchor_day": anchor_day,
-        "metrics": {"total": TXT(round(total / 1e4, 1)), "cash": TXT(round(cash_v / 1e4, 1)),
-                    "mv": TXT(round(mv_v / 1e4, 1)),
+        "metrics": {"total": TXT(round(total / 1e4, 1)) if total is not None else "—",
+                    "cash": TXT(round(cash_v / 1e4, 1)) if cash_v is not None else "—",
+                    "mv": TXT(round(mv_v / 1e4, 1)) if mv_v is not None else "—",
                     "cash_pct": TXT(round(cash_v / total * 100, 1)) if total else None,
                     "pos_pct": TXT(round((1 - cash_v / total) * 100, 1)) if total else None,
                     "day_pnl": TXT(day_pnl)},
@@ -193,12 +201,14 @@ def page_portfolio():
                          "etfs": [u for u in upd if isetf(u["code"])]},
         "equity": {"dates": [q.fmt_date(s) for s in eq["date"]],
                    "total": [round(float(v), 2) for v in eq["total"]],
-                   "dd": [round(float(v), 2) for v in eq["dd"]]},
+                   "dd": [round(float(v), 2) for v in eq["dd"]]} if not eq.empty
+                  else {"dates": [], "total": [], "dd": []},
         "snapshots": [{"asof": q.fmt_date(s), "total": round(float(t), 0)}
                       for s, t in zip(snaps["asof"], snaps["total"])] if not snaps.empty else [],
         "benchmarks": benchmarks,
         "three_axis": {"类债": round(bond / tot4 * 100, 1), "宽基防守": round(wide / tot4 * 100, 1),
-                       "权益进攻": round(attack / tot4 * 100, 1), "现金": round(cash_v / tot4 * 100, 1)},
+                       "权益进攻": round(attack / tot4 * 100, 1), "现金": round(cash_v / tot4 * 100, 1)}
+                      if tot4 else {"类债": None, "宽基防守": None, "权益进攻": None, "现金": None},
         "trades": q.load_trade_log(20).fillna("").to_dict("records"),
         "monthly_md": q.monthly_report_md(),
         "equity_end": q.fmt_date(eq["date"].iloc[-1]) if not eq.empty else "—",

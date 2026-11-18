@@ -37,6 +37,26 @@ export default function Dashboard() {
   if (!d) return <Loading />;
 
   const sg = d.signals || {};
+  // 首访引导：零数据（未跑 demo / 未接入数据）时给出两条路
+  const noData = !d.bench && !(d.stoploss?.length) && !sg.golden_cross?.rows?.length
+    && !sg.divergence?.rows?.length && !sg.oversold_reversal?.rows?.length && !d.accumulate?.length;
+  if (noData) return (
+    <Panel title="还没有数据" extra="首次使用">
+      <div className="empty" style={{ lineHeight: 2 }}>
+        本地没有任何行情与信号数据。两条路任选：
+        <ul style={{ textAlign: "left", display: "inline-block", margin: "10px 0" }}>
+          <li><b>先看界面长什么样</b>（30 秒，合成演示数据）：
+            <pre className="term" style={{ margin: "6px 0" }}>make demo</pre>
+          </li>
+          <li><b>接入自己的数据</b>：看板「设置」页配好 Tushare token，然后
+            <pre className="term" style={{ margin: "6px 0" }}>{`PYTHONPATH=. python scripts/data/update_all_kline.py
+PYTHONPATH=. python scripts/screener/daily_scan_all.py`}</pre>
+            详细步骤见 README 或 docs/quickstart.md
+          </li>
+        </ul>
+      </div>
+    </Panel>
+  );
   const tabDefs = [
     ["sl", "止损警示", d.stoploss?.length],
     ["golden_cross", "金叉", sg.golden_cross?.rows?.length],
@@ -66,8 +86,8 @@ export default function Dashboard() {
   return (
     <>
       <PageHead eyebrow="Daily Cockpit" title="今日决策驾驶舱" chips={[
-        ["数据 ", `${d.bench?.slice(5)} · 延迟 T-1`],
-        ["现金 ", `${d.cash.pct}% · ${d.cash.asof?.slice(5)}`],
+        ["数据 ", d.bench ? `${d.bench?.slice(5)} · ${d.bench?.slice(5) === d.today ? "T-0" : "T-1"}` : "无"],
+        ["现金 ", `${d.cash.pct ?? "—"}% · ${d.cash.asof?.slice(5)}`],
       ]} />
 
       <div className="cards">

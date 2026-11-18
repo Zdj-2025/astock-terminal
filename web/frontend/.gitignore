@@ -1,2 +1,2 @@
 node_modules
-dist
+# dist 不忽略：构建产物随仓库分发（访客免装 Node）；改前端后记得 npm run build 再提交

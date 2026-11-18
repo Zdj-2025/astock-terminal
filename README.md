@@ -37,13 +37,13 @@
 ```bash
 git clone https://github.com/Zdj-2025/astock-terminal && cd astock-terminal
 pip install -r requirements.txt
-cd web/frontend && npm install && npm run build && cd ../..
 make demo
 # 打开 http://localhost:8601
 ```
 
-`make demo` 用脚本生成的合成行情装一套演示数据，先用 30 秒看界面是否合用，
-再决定要不要接真实数据。
+前端构建产物已随仓库提供，**不需要装 Node**。`make demo` 用脚本生成的合成行情
+装一套演示数据，先用 30 秒看界面是否合用，再决定要不要接真实数据。改了前端
+代码才需要 Node：`cd web/frontend && npm install && npm run build`。
 
 ## 接入真实数据
 

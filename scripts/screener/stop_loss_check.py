@@ -28,6 +28,8 @@ DET = DivergenceDetector()
 
 
 def check_stop_loss():
+    if not PORT.exists():   # 尚未配置持仓（如刚 clone 零数据起服务）→ 无止损检查
+        return []
     port = pd.read_excel(PORT)
     port['code'] = port['code'].astype(str).str.zfill(6)
     rows = []

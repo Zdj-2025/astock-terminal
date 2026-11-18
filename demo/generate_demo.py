@@ -114,10 +114,12 @@ def main():
                   "mv": nv.round(0) * .65, "peak": peak.round(0),
                   "dd": ((nv / peak - 1) * 100).round(2)}
                  ).to_csv(acc / "daily_equity_reconstructed.csv", index=False)
+    snap_days, snap_nv = list(D[::40]), list(nv[::40])
+    snap_days[-1], snap_nv[-1] = D[-1], nv[-1]   # 最新锚点对齐数据末日，避免"数据11-18锚点10-22"的观感
     snaps = pd.DataFrame({
-        "asof": [f"{str(d)[:4]}-{str(d)[4:6]}-{str(d)[6:]}" for d in D[::40]],
-        "total": nv[::40].round(0), "cash": nv[::40].round(0) * .35,
-        "mv": nv[::40].round(0) * .65, "leverage": "68%仓位", "source": "demo",
+        "asof": [f"{str(d)[:4]}-{str(d)[4:6]}-{str(d)[6:]}" for d in snap_days],
+        "total": [round(v) for v in snap_nv], "cash": [round(v * .35) for v in snap_nv],
+        "mv": [round(v * .65) for v in snap_nv], "leverage": "68%仓位", "source": "demo",
         "commit_date": "", "note": "", "self_capital": "", "schema": "", "era": ""})
     snaps.to_csv(acc / "capital_snapshots.csv", index=False)
 
