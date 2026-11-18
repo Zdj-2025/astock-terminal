@@ -20,20 +20,34 @@ import pandas as pd
 os.environ['no_proxy'] = '*'
 os.environ['NO_PROXY'] = '*'
 
-import tushare as ts
+try:  # 可选依赖：日线下载/缠论/综合评分等需要；未安装时本模块仍可 import
+    import tushare as ts
+except ImportError:
+    ts = None
 
 # ── 常量 ──────────────────────────────────────────────────────────────
 
+def _require_ts():
+    """tushare 未安装时给出安装指引。"""
+    if ts is None:
+        raise RuntimeError(
+            "此功能依赖 tushare（日线下载/财务/板块等）。安装：pip install -r requirements-full.txt")
+    return ts
+
+
 def get_token() -> str:
-    """Tushare token 只从环境变量 TUSHARE_TOKEN 读取（不内置任何默认值）。
+    """读取 Tushare token：环境变量 TUSHARE_TOKEN 优先，其次「设置」页面保存的
+    config/settings.local.json（不内置任何默认值）。
 
     注册获取：https://tushare.pro（积分决定接口权限，见 docs/data-sources.md）
     """
-    tok = os.environ.get("TUSHARE_TOKEN", "").strip()
+    from scripts.core.runtime_settings import get as _get
+    tok = _get("tushare_token")
     if not tok:
         raise RuntimeError(
-            "未配置 TUSHARE_TOKEN 环境变量。请复制 .env.example 为 .env 并填入"
-            "你的 token（注册：https://tushare.pro/user/register），详见 docs/data-sources.md")
+            "未配置 Tushare token。两种方式任选：① 看板「设置」页填入并保存；"
+            "② 复制 .env.example 为 .env，填 TUSHARE_TOKEN=你的token"
+            "（注册：https://tushare.pro/user/register），详见 docs/data-sources.md")
     return tok
 _CACHE_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "cache" / "tushare"
 _RATE_INTERVAL = 0.22  # 秒，约280次/分钟（5000积分权限500次/分钟留余量）
@@ -127,6 +141,7 @@ class TushareClient:
     """Tushare Pro统一数据访问层"""
 
     def __init__(self, token: Optional[str] = None):
+        _require_ts()
         self._token = token or get_token()
         ts.set_token(self._token)
         self._pro = ts.pro_api()

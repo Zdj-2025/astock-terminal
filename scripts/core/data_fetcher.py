@@ -3,7 +3,10 @@
 数据获取模块 - 基于AKShare
 封装所有数据获取接口，提供统一的访问层
 """
-import akshare as ak
+try:  # 可选依赖：实时/分钟数据源。未安装时本模块可 import，调用相关接口会给出指引
+    import akshare as ak
+except ImportError:
+    ak = None
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
@@ -11,6 +14,14 @@ from typing import Dict, List, Optional, Union
 import json
 from pathlib import Path
 import time
+
+def _require_akshare():
+    """akshare 未安装时给出指引（可选依赖，见 requirements-full.txt）。"""
+    if ak is None:
+        raise RuntimeError(
+            "此功能依赖 akshare（实时行情/分钟线/财务/资金流）。安装：pip install -r requirements-full.txt"
+        )
+
 
 
 class DataFetcher:
@@ -92,6 +103,7 @@ class DataFetcher:
             print(f"⚠️  缓存保存失败: {e}")
 
     def get_realtime_quote(self, symbol: str) -> Dict:
+        _require_akshare()
         """
         获取实时行情
 
@@ -155,6 +167,7 @@ class DataFetcher:
         end_date: Optional[str] = None,
         adjust: str = 'qfq'
     ) -> pd.DataFrame:
+        _require_akshare()
         """
         获取历史K线数据
 
@@ -250,6 +263,7 @@ class DataFetcher:
             return pd.DataFrame()
 
     def get_financial_data(self, symbol: str) -> Dict:
+        _require_akshare()
         """
         获取财务数据
 
@@ -329,6 +343,7 @@ class DataFetcher:
             return None
 
     def get_fund_flow(self, symbol: str, market: str = 'sh') -> Dict:
+        _require_akshare()
         """
         获取资金流向数据
 
@@ -378,6 +393,7 @@ class DataFetcher:
             return None
 
     def get_stock_info(self, symbol: str) -> Dict:
+        _require_akshare()
         """
         获取股票基本信息
 
@@ -416,6 +432,7 @@ class DataFetcher:
             return None
 
     def get_multiple_quotes(self, symbols: List[str]) -> pd.DataFrame:
+        _require_akshare()
         """
         批量获取实时行情
 

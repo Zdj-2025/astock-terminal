@@ -1,11 +1,12 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Compass, Briefcase, LineChart, HeartPulse } from "lucide-react";
+import { Compass, Briefcase, LineChart, HeartPulse, Settings } from "lucide-react";
 
 const NAV = [
   { to: "/", icon: Compass, label: "今日决策驾驶舱", end: true },
   { to: "/portfolio", icon: Briefcase, label: "持仓与净值中心" },
   { to: "/stock", icon: LineChart, label: "个股分析工作台" },
   { to: "/health", icon: HeartPulse, label: "系统健康" },
+  { to: "/settings", icon: Settings, label: "设置" },
 ];
 
 export default function App() {

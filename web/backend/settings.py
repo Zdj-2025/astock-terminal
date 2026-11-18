@@ -1,7 +1,7 @@
-"""运行配置 — 全部来自环境变量 / .env（复制 .env.example 为 .env 开始）。
+"""运行配置 —— 目录与密钥，统一走 scripts/core/runtime_settings.py。
 
-目录类变量指向"你的数据在哪里"；demo 模式把三个目录都指到 demo/ 下即可
-（见 make demo / docs/quickstart.md）。
+优先级：环境变量 / .env > 「设置」页面保存的 config/settings.local.json > 默认值。
+目录类变量（STOCK_*_DIR）只认环境变量；demo 模式见 make demo / docs/quickstart.md。
 """
 from __future__ import annotations
 
@@ -14,6 +14,8 @@ try:  # .env 优先（复制 .env.example 为 .env）
 except ImportError:
     pass
 
+from scripts.core import runtime_settings as _rs  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent.parent
 
 
@@ -23,24 +25,32 @@ def _dir(env: str, default: str) -> Path:
 
 # ── 数据目录（K线/信号等 parquet；默认 <仓库>/data） ──
 DATA_DIR = _dir("STOCK_DATA_DIR", str(ROOT / "data"))
-# ── 持仓配置目录（portfolio.xlsx / capital.xlsx / trade_log.csv） ──
-CONFIG_DIR = _dir("STOCK_CONFIG_DIR", str(ROOT / "config"))
+# ── 持仓配置目录（portfolio.xlsx / capital.xlsx / settings.local.json） ──
+CONFIG_DIR = _rs.config_dir()
 # ── 报告目录（净值/公告/推荐闭环） ──
 REPORTS_DIR = _dir("STOCK_REPORTS_DIR", str(ROOT / "reports"))
 
-# ── 数据源 ──
-# Tushare token（必配才有点击"下载数据/缠论/综合评分"能力）：https://tushare.pro
-TUSHARE_TOKEN = os.environ.get("TUSHARE_TOKEN", "")
 
-# ── AI 解读（OpenAI 兼容协议：GLM/OpenAI/DeepSeek/Ollama 均可） ──
-LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
-LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1")
-LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini")
+# ── 密钥（env 优先，其次「设置」页保存的值；来源见 source_of） ──
 
-# ── 服务 ──
-HOST = os.environ.get("HOST", "127.0.0.1")   # 对外服务改 0.0.0.0（自行承担暴露风险）
-PORT = int(os.environ.get("PORT", "8601"))
+def reload() -> None:
+    """「设置」页保存后调用：重新读取环境与本地配置文件。"""
+    import importlib
+    importlib.reload(_rs)
+
+
+def _v(key: str) -> str:
+    return _rs.get(key)
 
 
 def llm_ready() -> bool:
-    return bool(LLM_API_KEY)
+    return bool(_v("llm_api_key"))
+
+
+# 兼容旧引用：模块属性访问时代取值（app.py 里 S.LLM_API_KEY 等）
+def __getattr__(name):  # PEP 562
+    m = {"TUSHARE_TOKEN": "tushare_token", "LLM_API_KEY": "llm_api_key",
+         "LLM_BASE_URL": "llm_base_url", "LLM_MODEL": "llm_model"}
+    if name in m:
+        return _v(m[name])
+    raise AttributeError(name)

@@ -302,13 +302,83 @@ def settings_status():
             "data_dir": str(S.DATA_DIR), "version": "0.3.0"}
 
 
+# ═══════════════ 设置页（数据源与大模型，界面可配） ═══════════════
+
+@app.get("/api/settings")
+def settings_get():
+    """当前生效配置（脱敏）+ 来源。来源：env=.env/环境变量，界面=settings.local.json，默认。"""
+    from scripts.core import runtime_settings as rs
+    eff = rs.effective()
+    return {
+        "tushare_token": {"masked": rs.mask(eff["tushare_token"]["value"]),
+                          "configured": bool(eff["tushare_token"]["value"]),
+                          "source": eff["tushare_token"]["source"]},
+        "llm_api_key": {"masked": rs.mask(eff["llm_api_key"]["value"]),
+                        "configured": bool(eff["llm_api_key"]["value"]),
+                        "source": eff["llm_api_key"]["source"]},
+        "llm_base_url": {"value": eff["llm_base_url"]["value"], "source": eff["llm_base_url"]["source"]},
+        "llm_model": {"value": eff["llm_model"]["value"], "source": eff["llm_model"]["source"]},
+        "dirs": {"data": str(S.DATA_DIR), "config": str(S.CONFIG_DIR), "reports": str(S.REPORTS_DIR)},
+    }
+
+
+@app.post("/api/settings")
+def settings_save(patch: dict):
+    """保存到 config/settings.local.json（环境变量里的值优先级更高，会覆盖界面值）。"""
+    from scripts.core import runtime_settings as rs
+    allowed = {"tushare_token", "llm_api_key", "llm_base_url", "llm_model"}
+    clean = {k: v for k, v in (patch or {}).items() if k in allowed and isinstance(v, str)}
+    rs.save(clean)
+    return {"ok": True, "saved": sorted(clean.keys()), **settings_get()}
+
+
+@app.post("/api/settings/test-llm")
+def settings_test_llm():
+    """用当前生效的 LLM 配置发一个最小请求验证连通性。"""
+    import requests as _rq
+    if not S.LLM_API_KEY:
+        return JSONResponse(status_code=400, content={"ok": False, "error": "未配置 LLM_API_KEY"})
+    try:
+        r = _rq.post(
+            f"{S.LLM_BASE_URL.rstrip('/')}/chat/completions",
+            headers={"Authorization": f"Bearer {S.LLM_API_KEY}"},
+            json={"model": S.LLM_MODEL,
+                  "messages": [{"role": "user", "content": "回复两个字：正常"}],
+                  "max_tokens": 8, "temperature": 0},
+            timeout=30)
+        r.raise_for_status()
+        reply = r.json()["choices"][0]["message"]["content"]
+        return {"ok": True, "model": S.LLM_MODEL, "reply": str(reply)[:40]}
+    except Exception as e:
+        return JSONResponse(status_code=502, content={"ok": False, "error": str(e)[:300]})
+
+
+@app.post("/api/settings/test-tushare")
+def settings_test_tushare():
+    """验证 tushare token：拉一条交易日历。"""
+    try:
+        from scripts.core.tushare_client import _require_ts
+        _require_ts()
+    except RuntimeError as e:
+        return JSONResponse(status_code=400, content={"ok": False, "error": str(e)})
+    import tushare as _ts
+    try:
+        pro = _ts.pro_api(S.TUSHARE_TOKEN)
+        df = pro.trade_cal(exchange="SSE", limit=1, end_date="20300101",
+                           fields="cal_date,is_open")
+        return {"ok": True, "sample": df.iloc[0].to_dict() if len(df) else None}
+    except Exception as e:
+        return JSONResponse(status_code=502, content={"ok": False, "error": str(e)[:300]})
+
+
 @app.get("/api/ai/digest")
 def ai_digest():
     """把晚报数据交给 LLM 生成解盘（需在 .env 配置 LLM_*）。"""
     if not S.LLM_API_KEY:
         return JSONResponse(status_code=400, content={
-            "error": "未配置 LLM_API_KEY。复制 .env.example 为 .env，填入任意 OpenAI 兼容服务的 "
-                     "LLM_API_KEY / LLM_BASE_URL / LLM_MODEL（GLM/OpenAI/DeepSeek/Ollama 均可）。"})
+            "error": "未配置大模型。两种方式任选：① 打开「设置」页填入 LLM_API_KEY 并保存；"
+                     "② 复制 .env.example 为 .env 填 LLM_*。任意 OpenAI 兼容服务均可"
+                     "（GLM/OpenAI/DeepSeek/本地 Ollama）。"})
     import requests as _rq
     text = evening_report().get("text", "")[:6000]
     prompt = (
