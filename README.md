@@ -4,7 +4,7 @@
 
 **本地优先的 A 股投研终端 —— 数据自持 · 策略可改 · AI 可选**
 
-[![CI](https://github.com/<你>/astock-terminal/actions/workflows/ci.yml/badge.svg)](https://github.com/<你>/astock-terminal/actions/workflows/ci.yml)
+[![CI](https://github.com/Zdj-2025/astock-terminal/actions/workflows/ci.yml/badge.svg)](https://github.com/Zdj-2025/astock-terminal/actions/workflows/ci.yml)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10+-3670A0?logo=python&logoColor=ffdd54)](pyproject.toml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/faq.md)
@@ -42,7 +42,7 @@ FastAPI + React 18 + ECharts 四页决策看板 · 收盘扫描信号体系 · O
 ## 🚀 30 秒体验（demo 模式，合成数据）
 
 ```bash
-git clone https://github.com/<你>/astock-terminal && cd astock-terminal
+git clone https://github.com/Zdj-2025/astock-terminal && cd astock-terminal
 pip install -r requirements.txt            # 核心依赖
 cd web/frontend && npm install && npm run build && cd ../..
 make demo                                  # 生成演示数据并启动
@@ -91,7 +91,7 @@ crontab 调度。字段口径与运维见 [docs/configuration.md](docs/configura
 ## 📄 许可与商业授权
 
 - 开源协议：**GNU AGPL-3.0**（[LICENSE](LICENSE)）—— 云服务若使用本项目须开放源码，或购买商业授权。
-- 商业授权 / 托管版咨询：`<你的邮箱>`
+- 商业授权 / 托管版咨询：[GitHub Issues](https://github.com/Zdj-2025/astock-terminal/issues)
 
 ---
 
@@ -107,6 +107,6 @@ leaves your disk. Licensed under AGPL-3.0; commercial licensing available.
 
 **如果这个项目帮到了你，顺手点个 ⭐ Star —— 这是对独立开发最实际的支持。**
 
-[![Star History Chart](https://api.star-history.com/svg?repos=<你>/astock-terminal&type=Date)](https://star-history.com#<你>/astock-terminal&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=Zdj-2025/astock-terminal&type=Date)](https://star-history.com#Zdj-2025/astock-terminal&Date)
 
 </div>
