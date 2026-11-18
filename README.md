@@ -20,10 +20,15 @@
 
 - 数据源从 akshare 换成 tushare，起因是东财接口限流封 IP，一次收盘扫描卡了
   15 分钟。换源时加了限速（约 280 次/分钟）和按数据类型分级的磁盘缓存
-- 每条策略推荐都记录 pnl5 / pnl10 / pnl20 做闭环追踪，连续为负的策略进删除
-  清单——现在留下的信号都是这么筛过的
-- 环境坑也踩过：系统代理指向已死端口时所有数据请求静默超时，这类问题在代码里
-  留了防御（国内数据源强制直连）
+- 算法层陆续集成过缠论（分型/笔/中枢/买卖点）、艾略特波浪、双参数 MACD、
+  斐波那契、量价分布、卡尔曼滤波，分析器攒到 30 多个。都是给决策提供视角的
+  输入，不指望任何单一算法包打天下
+- 策略做减法是最花时间也最值的部分：筛选器最多时堆到 80 多个，现在每日扫描
+  只固定跑 4 路——主线龙头、金叉、底背离、超跌反转。留下的每路都有前向验证
+  数据（金叉 t=5.1、超跌反转 t=6.2、底背离 2026H2 复测 5 日超额 +2.18），
+  每条推荐记录 pnl5 / pnl10 / pnl20 做闭环追踪
+- 不达标的出队，例子：聪明钱因子 2026 年 11 月被砍——连续 8 周负超额、
+  12 个月回测 5 日超额 -0.86%，转为独立观察，不占每日扫描
 - 看板重写过三版，从 Streamlit 多页到现在的 FastAPI + React，为的是数据量上来
   之后页面还能即开即用
 
@@ -106,5 +111,6 @@ A self-hosted A-share research terminal (FastAPI + React + ECharts): daily scann
 (stop-loss / golden cross / divergence / oversold reversal), portfolio and equity
 tracking from local spreadsheets, a per-stock workbench (K-line, dual-parameter MACD,
 Chan theory, Elliott waves), and an optional AI digest via any OpenAI-compatible API.
-Dogfooded and iterated for six months before publishing. Data stays on your disk.
-AGPL-3.0; commercial licensing available.
+Dogfooded for six months; 80+ scanners were tried and pruned down to 4 validated daily
+strategies, each with forward-test records. Data stays on your disk. AGPL-3.0;
+commercial licensing available.
