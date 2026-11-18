@@ -1,0 +1,4 @@
+# 测试依赖（运行 tests/ 需要；仅使用看板无需安装）
+#   pip install -r requirements-dev.txt
+pytest
+httpx2          # starlette.testclient 首选的后端（缺失时回退 httpx 并告警）

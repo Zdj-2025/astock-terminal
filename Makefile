@@ -31,4 +31,5 @@ dev-api:
 	python -m uvicorn web.backend.app:app --port 8602 --reload
 
 test:
+	pip install -q -r requirements-dev.txt
 	python -m pytest tests/ -q
