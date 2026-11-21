@@ -13,6 +13,10 @@
 |---|---|
 | ![dashboard](docs/screenshots/dashboard.png) | ![portfolio](docs/screenshots/portfolio.png) |
 | ![stock](docs/screenshots/stock.png) | ![health](docs/screenshots/health.png) |
+| ![settings](docs/screenshots/settings.png) | ![first-run](docs/screenshots/first-run.png) |
+
+上面最后一张是零数据首次打开的样子：不做任何配置，页面直接给出两条上路命令。
+设置页可配数据源（tushare token）与大模型（OpenAI 兼容），保存即生效，带连通测试。
 
 ## 背景
 
@@ -44,6 +48,10 @@ make demo
 前端构建产物已随仓库提供，**不需要装 Node**。`make demo` 用脚本生成的合成行情
 装一套演示数据，先用 30 秒看界面是否合用，再决定要不要接真实数据。改了前端
 代码才需要 Node：`cd web/frontend && npm install && npm run build`。
+
+实测耗时（CI 干净环境 / 本机 M 系芯片）：依赖安装约 18 秒～3 分钟（视网络），
+demo 数据生成不到 1 秒，看板接口本地约 5 毫秒（TTL 缓存热）。日常运转每晚
+收盘扫描约 8-12 分钟，全自动。
 
 ## 接入真实数据
 

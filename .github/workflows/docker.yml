@@ -1,0 +1,41 @@
+# Docker 镜像发布：打 tag(v*) 时构建并推送到 Docker Hub
+# 启用步骤（仓库维护者一次性操作）：
+#   1. Docker Hub 注册账号，创建 Access Token（Account Settings → Security）
+#   2. 本仓库 Settings → Secrets and variables → Actions 添加：
+#        DOCKERHUB_USERNAME = 你的 Docker Hub 用户名
+#        DOCKERHUB_TOKEN    = 上一步创建的 Token
+#   3. 之后每次 git tag v* && git push --tags 即自动发布
+#      镜像地址：docker.io/<用户名>/astock-terminal:<tag>
+name: docker
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/astock-terminal
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

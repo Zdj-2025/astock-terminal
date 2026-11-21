@@ -15,6 +15,7 @@
 
 用法: cd stock && PYTHONPATH=. python scripts/screener/stop_loss_check.py
 """
+import os
 import sys
 from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -22,8 +23,9 @@ sys.path.insert(0, str(PROJECT_ROOT))
 import pandas as pd
 from scripts.analyzers.divergence_detector import DivergenceDetector
 
-STORE = PROJECT_ROOT / 'data/store/kline'
-PORT = PROJECT_ROOT / 'config/portfolio.xlsx'
+# 目录认环境变量（与 web/backend/settings.py 同一套约定：STOCK_*_DIR 可重定向）
+STORE = Path(os.environ.get("STOCK_DATA_DIR", str(PROJECT_ROOT / "data"))) / "store/kline"
+PORT = Path(os.environ.get("STOCK_CONFIG_DIR", str(PROJECT_ROOT / "config"))) / "portfolio.xlsx"
 DET = DivergenceDetector()
 
 
