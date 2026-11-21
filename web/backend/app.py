@@ -309,7 +309,7 @@ def page_health():
 @app.get("/api/settings/status")
 def settings_status():
     return {"llm": bool(S.LLM_API_KEY), "tushare": bool(S.TUSHARE_TOKEN),
-            "data_dir": str(S.DATA_DIR), "version": "0.3.0"}
+            "data_dir": str(S.DATA_DIR), "version": "1.0.0"}
 
 
 # ═══════════════ 设置页（数据源与大模型，界面可配） ═══════════════
